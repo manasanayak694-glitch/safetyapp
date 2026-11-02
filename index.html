@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Safety Emergency Hub</title>
+    <style>
+        * { box-sizing: border-box; font-family: 'Segoe UI', Arial, sans-serif; }
+        body {
+            background-color: #f3f4f6;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 16px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+            width: 100%;
+            max-width: 360px;
+            text-align: center;
+        }
+        h2 { color: #1f2937; margin-bottom: 24px; font-size: 22px; }
+        .panic-btn {
+            width: 200px;
+            height: 200px;
+            border-radius: 50%;
+            background-color: #ef4444;
+            color: white;
+            font-size: 22px;
+            font-weight: bold;
+            border: none;
+            cursor: pointer;
+            box-shadow: 0 12px 20px rgba(239, 68, 68, 0.4);
+            transition: transform 0.1s, background-color 0.2s;
+            margin: 20px auto;
+        }
+        .panic-btn:active { transform: scale(0.95); background-color: #dc2626; }
+        .status-box {
+            background: #f9fafb;
+            border: 1px solid #e5e7eb;
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 14px;
+            color: #4b5563;
+            margin-bottom: 20px;
+            min-height: 48px;
+        }
+        .config-section {
+            border-top: 1px solid #e5e7eb;
+            padding-top: 20px;
+            text-align: left;
+        }
+        label { font-size: 12px; font-weight: 600; color: #4b5563; display: block; margin-bottom: 6px; }
+        input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            font-size: 14px;
+            margin-bottom: 12px;
+        }
+        .save-btn {
+            width: 100%;
+            padding: 10px;
+            background: #10b981;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .save-btn:hover { background: #059669; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>STUDENT SAFETY PORTAL</h2>
+    
+    <!-- Core Panic Alert Trigger Action -->
+    <button class="panic-btn" onclick="sendEmergencyAlert()">PANIC BUTTON</button>
+    
+    <div class="status-box" id="statusMessage"> System Armed. Ready for deployment.</div>
+
+    <!-- Student Emergency Numbers Configuration Panel -->
+    <div class="config-section">
+        <label for="contactNumber">EMERGENCY CONTACT PHONE NUMBER:</label>
+        <input type="tel" id="contactNumber" placeholder="e.g., +919876543210" />
+        <button class="save-btn" onclick="saveContact()">SAVE CONTACT NUMBER</button>
+    </div>
+</div>
+
+<script>
+    // Load student's saved custom number automatically on launch
+    window.onload = function() {
+        const savedNumber = localStorage.getItem('emergencyPhone');
+        if (savedNumber) {
+            document.getElementById('contactNumber').value = savedNumber;
+        }
+    };
+
+    function saveContact() {
+        const num = document.getElementById('contactNumber').value.trim();
+        if(num) {
+            localStorage.setItem('emergencyPhone', num);
+            alert("Emergency contact phone number saved successfully!");
+        } else {
+            alert("Please input a valid phone number setup.");
+        }
+    }
+
+    function sendEmergencyAlert() {
+        const statusBox = document.getElementById('statusMessage');
+        const phone = localStorage.getItem('emergencyPhone');
+        
+        if (!phone) {
+            statusBox.innerHTML = "<span style='color:#ef4444;'>Error: Save a contact number below first!</span>";
+            return;
+        }
+
+        statusBox.innerHTML = "Fetching real-time GPS coordinates...";
+
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    const lat = position.coords.latitude;
+                    const lng = position.coords.longitude;
+                    
+                    statusBox.innerHTML = "Location secure! Redirecting to messaging app...";
+                    
+                    // Generate tracking alert payload link
+                    const mapLink = `https://google.com{lat},${lng}`;
+                    const smsText = `EMERGENCY! I am a student requiring assistance. Track my location link: ${mapLink}`;
+                    
+                    // Native execution hook to fire system default messaging interface
+                    window.location.href = `sms:${phone}?&body=${encodeURIComponent(smsText)}`;
+                },
+                (error) => {
+                    statusBox.innerHTML = "<span style='color:#ef4444;'>Error: Please permit location access in settings.</span>";
+                },
+                { enableHighAccuracy: true, timeout: 8000 }
+            );
+        } else {
+            statusBox.innerHTML = "Error: System device browser location components missing.";
+        }
+    }
+</script>
+
+</body>
+</html>
