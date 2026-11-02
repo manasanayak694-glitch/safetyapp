@@ -89,12 +89,90 @@
     <div class="status-box" id="statusMessage"> System Armed. Ready for deployment.</div>
 
     <!-- Student Emergency Numbers Configuration Panel -->
+    <!-- Updated Section for Multiple Contacts -->
     <div class="config-section">
-        <label for="contactNumber">EMERGENCY CONTACT PHONE NUMBER:</label>
-        <input type="tel" id="contactNumber" placeholder="e.g., +919876543210" />
-        <button class="save-btn" onclick="saveContact()">SAVE CONTACT NUMBER</button>
+        <label>SAVED EMERGENCY CONTACTS:</label>
+        <div id="contactList" style="margin-bottom: 12px; font-size: 14px; text-align: left; background: #f3f4f6; padding: 8px; border-radius: 6px; min-height: 30px; color: #374151;">No contacts saved yet.</div>
+        
+        <label for="contactNumber">ADD NEW FRIEND'S NUMBER:</label>
+        <input type="tel" id="contactNumber" placeholder="Enter number..." />
+        <button class="save-btn" onclick="addContact()">ADD CONTACT</button>
+        <button class="save-btn" onclick="clearAll()" style="background: #9ca3af; margin-top: 8px;">CLEAR ALL</button>
     </div>
 </div>
+
+<script>
+    let contacts = [];
+
+    // Automatically load contacts when app opens
+    window.onload = function() {
+        const savedContacts = localStorage.getItem('safetyContacts');
+        if (savedContacts) {
+            contacts = JSON.parse(savedContacts);
+            displayContacts();
+        }
+    };
+
+    function addContact() {
+        const numInput = document.getElementById('contactNumber');
+        const number = numInput.value.trim();
+        if (number) {
+            contacts.push(number);
+            localStorage.setItem('safetyContacts', JSON.stringify(contacts));
+            numInput.value = "";
+            displayContacts();
+            alert("Contact added!");
+        }
+    }
+
+    function clearAll() {
+        contacts = [];
+        localStorage.removeItem('safetyContacts');
+        displayContacts();
+    }
+
+    function displayContacts() {
+        const listDiv = document.getElementById('contactList');
+        if (contacts.length === 0) {
+            listDiv.innerHTML = "No contacts saved yet.";
+        } else {
+            listDiv.innerHTML = contacts.join("<br>");
+        }
+    }
+
+    function sendEmergencyAlert() {
+        const statusBox = document.getElementById('statusMessage');
+        if (contacts.length === 0) {
+            statusBox.innerHTML = "<span style='color:#ef4444;'>Error: Add contacts below first!</span>";
+            return;
+        }
+
+        statusBox.innerHTML = "Fetching real-time GPS coordinates...";
+
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    const lat = position.coords.latitude;
+                    const lng = position.coords.longitude;
+                    statusBox.innerHTML = "Location secure! Launching SMS platform...";
+                    
+                    const mapLink = `https://google.com{lat},${lng}`;
+                    const smsText = `EMERGENCY! I need help. Track my live location here: ${mapLink}`;
+                    
+                    // Direct SMS string format supporting multiple numbers on Android
+                    const phoneNumbersString = contacts.join(",");
+                    window.location.href = `sms:${phoneNumbersString}?&body=${encodeURIComponent(smsText)}`;
+                },
+                (error) => {
+                    statusBox.innerHTML = "<span style='color:#ef4444;'>Error: Please allow location access.</span>";
+                },
+                { enableHighAccuracy: true, timeout: 8000 }
+            );
+        } else {
+            statusBox.innerHTML = "Error: Browser location components missing.";
+        }
+    }
+</script>
 
 <script>
     // Load student's saved custom number automatically on launch
